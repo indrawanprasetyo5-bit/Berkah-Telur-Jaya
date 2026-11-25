@@ -17,7 +17,7 @@ export const DEMO_ACCOUNTS: Record<
     password: "demo1234",
     profile: {
       id: "11111111-1111-4111-8111-111111111111",
-      full_name: "Pak Budi Santoso",
+      full_name: "Lala",
       role: "owner",
       whatsapp_number: "6281234567801",
       created_at: new Date().toISOString(),
@@ -28,7 +28,7 @@ export const DEMO_ACCOUNTS: Record<
     password: "demo1234",
     profile: {
       id: "22222222-2222-4222-8222-222222222222",
-      full_name: "Lala",
+      full_name: "Kasir 1",
       role: "staff",
       whatsapp_number: "6281234567802",
       created_at: new Date().toISOString(),
@@ -202,6 +202,7 @@ export interface SaleHistoryItem {
 
 export interface SaleWithItems {
   id: string;
+  cashier_name: string;
   total_amount: number;
   total_cost: number;
   payment_method: PaymentMethod;
@@ -222,6 +223,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
   return [
     {
       id: "sale-demo-01",
+      cashier_name: "Kasir 1",
       total_amount: 57000,
       total_cost: 51000,
       payment_method: "cash",
@@ -244,6 +246,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-02",
+      cashier_name: "Lala",
       total_amount: 427500,
       total_cost: 382500,
       payment_method: "transfer",
@@ -266,6 +269,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-03",
+      cashier_name: "Kasir 1",
       total_amount: 102000,
       total_cost: 88500,
       payment_method: "qris",
@@ -288,6 +292,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-04",
+      cashier_name: "Kasir 1",
       total_amount: 20000,
       total_cost: 17850,
       payment_method: "cash",
@@ -310,6 +315,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-05",
+      cashier_name: "Kasir 1",
       total_amount: 148000,
       total_cost: 126500,
       payment_method: "cash",
@@ -343,6 +349,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-06",
+      cashier_name: "Kasir 1",
       total_amount: 20000,
       total_cost: 25500,
       payment_method: "cash",
@@ -365,6 +372,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-07",
+      cashier_name: "Kasir 1",
       total_amount: 513000,
       total_cost: 459000,
       payment_method: "cash",
@@ -387,6 +395,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-08",
+      cashier_name: "Kasir 1",
       total_amount: 612000,
       total_cost: 531000,
       payment_method: "qris",
@@ -409,6 +418,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-09",
+      cashier_name: "Lala",
       total_amount: 855000,
       total_cost: 765000,
       payment_method: "transfer",
@@ -431,6 +441,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-10",
+      cashier_name: "Kasir 1",
       total_amount: 712500,
       total_cost: 637500,
       payment_method: "cash",
@@ -453,6 +464,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-11",
+      cashier_name: "Kasir 1",
       total_amount: 980000,
       total_cost: 840000,
       payment_method: "cash",
@@ -475,6 +487,7 @@ export function buildDemoSalesHistory(): SaleWithItems[] {
     },
     {
       id: "sale-demo-12",
+      cashier_name: "Kasir 1",
       total_amount: 684000,
       total_cost: 612000,
       payment_method: "qris",

@@ -8,18 +8,18 @@ import { LoginForm } from "./login-form";
 const BRAND_HIGHLIGHTS = [
   {
     icon: IconCashier,
-    title: "Kasir Cepat 1-2 Ketuk",
-    desc: "Jual kiloan, nominal rupiah, atau telur retak tanpa salah pencet di layar HP.",
+    title: "Kasir Kiloan & Rupiah",
+    desc: "Catat pembelian per kilo, nominal rupiah, hingga telur retak, lengkap dengan struk digital.",
   },
   {
     icon: IconStock,
-    title: "Stok Peti & 1-Klik WA Gudang",
-    desc: "Pantau sisa stok per jenis telur dan pesan kiriman mobil otomatis via WhatsApp.",
+    title: "Stok Peti & Kiriman Mobil",
+    desc: "Pantau sisa stok tiap jenis telur, catat kiriman gudang, dan pesan restock lewat WhatsApp.",
   },
   {
     icon: IconReport,
-    title: "Cocokkan Laci & Profit Bersih",
-    desc: "Catat kas keluar operasional, hitung selisih uang fisik, dan lihat laba harian akurat.",
+    title: "Tutup Kasir & Rekap Harian",
+    desc: "Catat kas keluar laci, cocokkan uang fisik harian, dan ekspor laporan penjualan ke Excel.",
   },
 ] as const;
 
@@ -52,9 +52,9 @@ export default async function LoginPage() {
             </div>
 
             <p className="mt-4 text-sm font-medium leading-relaxed text-ink lg:mt-6 lg:text-base">
-              Dirancang khusus untuk operasional Toko / Agen Telur: kontras
-              tinggi di kondisi terang, tombol lega untuk satu tangan, dan
-              hitungan untung rugi yang rapi setiap hari.
+              Sistem kasir, pantau stok peti, dan rekap keuangan harian untuk
+              operasional Berkah Telur Jaya - Jl. Letnan Sukarna, Kp. Gedong,
+              Ciampea, Bogor.
             </p>
 
             <ul className="mt-6 hidden space-y-4 lg:block">

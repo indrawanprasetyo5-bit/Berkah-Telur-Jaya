@@ -10,8 +10,8 @@ Aplikasi otomatis berjalan dalam **Mode Demo Lokal** jika environment variable S
 
 | Role | Nama | Email | Password | Akses |
 | :--- | :--- | :--- | :--- | :--- |
-| Owner | Pak Budi Santoso | `owner@berkahtelurjaya.demo` | `demo1234` | Semua menu, dashboard profit, update harga harian, export Excel |
-| Staff / Kasir | Lala | `staff@berkahtelurjaya.demo` | `demo1234` | Kasir, pantau stok & kiriman mobil, kas keluar, tutup kasir |
+| Owner | Lala | `owner@berkahtelurjaya.demo` | `demo1234` | Semua menu, dashboard profit, update harga harian, export Excel |
+| Staff / Kasir | Kasir 1 | `staff@berkahtelurjaya.demo` | `demo1234` | Kasir, pantau stok & kiriman mobil, kas keluar, tutup kasir |
 
 ## Fitur
 

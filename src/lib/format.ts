@@ -123,17 +123,24 @@ export function formatCompactRupiah(amount: number): string {
   return `${sign}${Math.round(abs)}`;
 }
 
-export interface SaleReceiptWhatsAppPayload {
+export interface SaleReceiptItem {
+  eggName: string;
+  qtyKg: number;
+  unitLabel: string;
+  isCracked: boolean;
+  pricePerKg: number;
+  subtotal: number;
+}
+
+export interface ThermalReceiptData {
+  receiptNo: string;
   createdAtIso: string;
-  items: {
-    eggName: string;
-    qtyKg: number;
-    unitLabel: string;
-    subtotal: number;
-  }[];
+  cashierName: string;
+  paymentMethod: PaymentMethod;
+  items: SaleReceiptItem[];
   totalKg: number;
   totalAmount: number;
-  paymentMethod: PaymentMethod;
+  cashReceived: number;
   changeAmount: number;
 }
 
@@ -143,33 +150,66 @@ const PAYMENT_LABEL_MAP: Record<PaymentMethod, string> = {
   transfer: "Transfer",
 };
 
-export function buildSaleReceiptWhatsAppUrl(
-  payload: SaleReceiptWhatsAppPayload
-): string {
-  const dateText = formatDateTimeWib(payload.createdAtIso);
-  const itemLines = payload.items.map(
-    (item) =>
-      `- ${item.eggName} (${item.unitLabel} / ${formatKg(item.qtyKg)} kg): ${formatRupiah(item.subtotal)}`
-  );
+export function formatReceiptNo(saleId: string, createdAtIso: string): string {
+  const dateKey = getJakartaDateKey(createdAtIso).replace(/-/g, "").slice(2);
+  const cleanSuffix = saleId
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(-4)
+    .toUpperCase()
+    .padStart(4, "0");
+  return `BTJ-${dateKey}-${cleanSuffix}`;
+}
 
-  const lines = [
-    "*NOTA BELANJA - BERKAH TELUR JAYA (BTJ)*",
-    "Jl. Letnan Sukarna, Kp. Gedong, Ciampea, Bogor",
-    `Tanggal: ${dateText} WIB`,
-    "",
-    "Rincian Belanja:",
-    ...itemLines,
-    "",
-    `Total Berat: ${formatKg(payload.totalKg)} kg`,
-    `Total Bayar: ${formatRupiah(payload.totalAmount)}`,
-    `Pembayaran: ${PAYMENT_LABEL_MAP[payload.paymentMethod]}`,
+function padSides(left: string, right: string, width = 30): string {
+  const gap = Math.max(1, width - left.length - right.length);
+  return `${left}${" ".repeat(gap)}${right}`;
+}
+
+export function buildSaleReceiptWhatsAppUrl(
+  payload: ThermalReceiptData
+): string {
+  const dateText = `${formatDateTimeWib(payload.createdAtIso)} WIB`;
+  const divider = "-".repeat(30);
+
+  const monoLines: string[] = [
+    "BERKAH TELUR JAYA (BTJ)",
+    "Jl. Letnan Sukarna, Ciampea",
+    divider,
+    `Nota  : ${payload.receiptNo}`,
+    `Waktu : ${dateText}`,
+    `Kasir : ${payload.cashierName}`,
+    `Bayar : ${PAYMENT_LABEL_MAP[payload.paymentMethod]}`,
+    divider,
   ];
 
-  if (payload.paymentMethod === "cash" && payload.changeAmount > 0) {
-    lines.push(`Kembalian: ${formatRupiah(payload.changeAmount)}`);
+  for (const item of payload.items) {
+    const title = item.isCracked ? `${item.eggName} (Retak)` : item.eggName;
+    const qtyDetail = `  ${formatKg(item.qtyKg)} kg x ${new Intl.NumberFormat("id-ID").format(Math.round(item.pricePerKg))}`;
+    const subText = formatRupiah(item.subtotal);
+    monoLines.push(title);
+    monoLines.push(padSides(qtyDetail, subText));
   }
 
-  lines.push("", "Terima kasih sudah berbelanja di Berkah Telur Jaya (BTJ)!");
+  monoLines.push(divider);
+  monoLines.push(padSides("Total Berat", `${formatKg(payload.totalKg)} kg`));
+  monoLines.push(padSides("TOTAL", formatRupiah(payload.totalAmount)));
 
-  return `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
+  if (payload.paymentMethod === "cash") {
+    const paid =
+      payload.cashReceived > 0 ? payload.cashReceived : payload.totalAmount;
+    monoLines.push(padSides("Tunai", formatRupiah(paid)));
+    monoLines.push(padSides("Kembali", formatRupiah(payload.changeAmount)));
+  }
+
+  monoLines.push(padSides("Status", "LUNAS"));
+  monoLines.push(divider);
+
+  const message = [
+    "```",
+    ...monoLines,
+    "```",
+    "Terima kasih sudah berbelanja di Berkah Telur Jaya.",
+  ].join("\n");
+
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }

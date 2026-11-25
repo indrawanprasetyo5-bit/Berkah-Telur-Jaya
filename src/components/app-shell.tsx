@@ -121,7 +121,7 @@ export function AppShell({ profile, isDemoLocal, children }: AppShellProps) {
         <div className="space-y-3 border-t-2 border-border-strong pt-4">
           {isDemoLocal && (
             <p className="rounded-md border border-warn-border bg-warn-bg px-2.5 py-1.5 text-xs font-semibold text-warn">
-              Mode Demo Lokal (tanpa DB)
+              Mode Demo: tersimpan sementara di browser
             </p>
           )}
           <button

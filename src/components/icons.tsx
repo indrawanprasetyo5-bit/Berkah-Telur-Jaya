@@ -169,3 +169,24 @@ export function IconTag(props: IconProps) {
     </svg>
   );
 }
+
+export function IconPrinter(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...baseProps} {...props}>
+      <path d="M6 9V4h12v5" />
+      <rect x="3" y="9" width="18" height="8" rx="2" />
+      <path d="M6 14h12v6H6z" />
+    </svg>
+  );
+}
+
+export function IconReceipt(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...baseProps} {...props}>
+      <path d="M5 3h14v18l-2.3-1.6-2.4 1.6-2.3-1.6-2.3 1.6-2.4-1.6L5 21V3z" />
+      <path d="M8.5 8h7" />
+      <path d="M8.5 12h7" />
+      <path d="M8.5 16h4" />
+    </svg>
+  );
+}

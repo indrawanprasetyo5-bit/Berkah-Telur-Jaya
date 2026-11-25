@@ -52,7 +52,7 @@ begin
       crypt('demo1234', gen_salt('bf')),
       now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
-      '{"full_name":"Pak Budi Santoso"}'::jsonb,
+      '{"full_name":"Lala"}'::jsonb,
       now() - interval '30 days',
       now(),
       '', '', '', ''
@@ -66,7 +66,7 @@ begin
       crypt('demo1234', gen_salt('bf')),
       now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
-      '{"full_name":"Lala"}'::jsonb,
+      '{"full_name":"Kasir 1"}'::jsonb,
       now() - interval '30 days',
       now(),
       '', '', '', ''
@@ -108,8 +108,8 @@ begin
 
   insert into public.profiles (id, full_name, role, whatsapp_number)
   values
-    (v_owner_id, 'Pak Budi Santoso', 'owner', '6281234567801'),
-    (v_staff_id, 'Lala', 'staff', '6281234567802')
+    (v_owner_id, 'Lala', 'owner', '6281234567801'),
+    (v_staff_id, 'Kasir 1', 'staff', '6281234567802')
   on conflict (id) do update
     set full_name = excluded.full_name,
         role = excluded.role,

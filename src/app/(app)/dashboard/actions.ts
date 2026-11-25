@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { saveDemoPriceOverrides } from "@/lib/demo-prices";
 import type { EggType } from "@/types/database";
 
 export interface EggPriceUpdateItem {
@@ -37,7 +38,12 @@ export async function updateDailyEggPrices(
   }
 
   if (!isSupabaseConfigured()) {
-    return { ok: true };
+    const updatedEggs = await saveDemoPriceOverrides(updates);
+    revalidatePath("/");
+    revalidatePath("/stok");
+    revalidatePath("/dashboard");
+    revalidatePath("/laporan");
+    return { ok: true, updatedEggs };
   }
 
   const supabase = await createClient();

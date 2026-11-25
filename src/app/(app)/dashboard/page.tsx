@@ -6,9 +6,9 @@ import {
   buildDemoExpenses,
   buildDemoSalesHistory,
   buildDemoStockLosses,
-  DEMO_EGG_TYPES,
   type DailyChartPoint,
 } from "@/lib/demo-data";
+import { getDemoEggsWithOverrides } from "@/lib/demo-prices";
 import {
   getJakartaDateKey,
   getJakartaDaysAgoStartIso,
@@ -75,7 +75,7 @@ export default async function DashboardPage() {
     });
   }
 
-  let eggs: EggType[] = DEMO_EGG_TYPES;
+  let eggs: EggType[] = [];
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -144,6 +144,7 @@ export default async function DashboardPage() {
       if (bucket) bucket.losses += Number(loss.cost_loss);
     }
   } else {
+    eggs = await getDemoEggsWithOverrides();
     const demoSales = buildDemoSalesHistory();
     for (const sale of demoSales) {
       const bucket = dayBuckets.get(getJakartaDateKey(sale.created_at));

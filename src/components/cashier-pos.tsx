@@ -7,19 +7,24 @@ import {
   buildSaleReceiptWhatsAppUrl,
   formatKg,
   formatPeti,
+  formatReceiptNo,
   formatRupiah,
   getStockStatus,
+  type ThermalReceiptData,
 } from "@/lib/format";
 import { createSaleTransaction } from "@/app/(app)/actions";
 import {
   IconAlert,
   IconCheck,
+  IconReceipt,
   IconTrash,
   IconWhatsApp,
 } from "@/components/icons";
+import { ReceiptModal } from "@/components/receipt-modal";
 
 interface CashierPosProps {
   initialEggs: EggType[];
+  cashierName: string;
   isDemoLocal: boolean;
 }
 
@@ -35,21 +40,6 @@ interface CartItem {
   pricePerKg: number;
   costPerKg: number;
   subtotal: number;
-}
-
-interface ReceiptSummary {
-  createdAtIso: string;
-  totalAmount: number;
-  totalKg: number;
-  paymentMethod: PaymentMethod;
-  changeAmount: number;
-  itemCount: number;
-  items: {
-    eggName: string;
-    qtyKg: number;
-    unitLabel: string;
-    subtotal: number;
-  }[];
 }
 
 const KG_PRESETS = [
@@ -68,7 +58,11 @@ function roundToNearest500(value: number): number {
   return Math.max(1000, Math.round(value / 500) * 500);
 }
 
-export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
+export function CashierPos({
+  initialEggs,
+  cashierName,
+  isDemoLocal,
+}: CashierPosProps) {
   const [eggs, setEggs] = useState<EggType[]>(initialEggs);
   const [selectedEggId, setSelectedEggId] = useState<string>(
     initialEggs[0]?.id ?? ""
@@ -77,6 +71,8 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
 
   const [isCracked, setIsCracked] = useState(false);
   const [crackedDiscountPct, setCrackedDiscountPct] = useState<number>(30);
+  const [customDiscountPctInput, setCustomDiscountPctInput] =
+    useState<string>("");
   const [manualCrackedPrice, setManualCrackedPrice] = useState<string>("");
 
   const [customKg, setCustomKg] = useState<string>("");
@@ -87,7 +83,8 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
   const [cashInput, setCashInput] = useState<string>("");
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [receipt, setReceipt] = useState<ReceiptSummary | null>(null);
+  const [receipt, setReceipt] = useState<ThermalReceiptData | null>(null);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [isSaving, startSaveTransition] = useTransition();
 
   const selectedEgg = useMemo(
@@ -125,10 +122,26 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
     if (manualCrackedPrice.trim() !== "" && parsedManual > 0) {
       return Math.round(parsedManual);
     }
-    return roundToNearest500(
-      selectedEgg.price_per_kg * (1 - crackedDiscountPct / 100)
-    );
+    const safePct = Math.min(90, Math.max(1, crackedDiscountPct));
+    return roundToNearest500(selectedEgg.price_per_kg * (1 - safePct / 100));
   }, [selectedEgg, isCracked, crackedDiscountPct, manualCrackedPrice]);
+
+  function handleCustomDiscountPctChange(rawValue: string) {
+    const digitsOnly = rawValue.replace(/[^0-9]/g, "");
+    if (digitsOnly === "") {
+      setCustomDiscountPctInput("");
+      return;
+    }
+    const parsed = Number(digitsOnly);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setCustomDiscountPctInput("");
+      return;
+    }
+    const clamped = Math.min(90, parsed);
+    setCustomDiscountPctInput(String(clamped));
+    setCrackedDiscountPct(clamped);
+    setManualCrackedPrice("");
+  }
 
   const totalAmount = useMemo(
     () => Math.round(cart.reduce((sum, item) => sum + item.subtotal, 0)),
@@ -290,23 +303,34 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
         );
       }
 
+      const createdAtIso = new Date().toISOString();
+      const saleId = result.saleId ?? `demo-${Date.now()}`;
+      const finalTotal = result.totalAmount ?? totalAmount;
+      const finalChange = result.changeAmount ?? changeAmount;
+
       setReceipt({
-        createdAtIso: new Date().toISOString(),
-        totalAmount: result.totalAmount ?? totalAmount,
-        totalKg,
+        receiptNo: formatReceiptNo(saleId, createdAtIso),
+        createdAtIso,
+        cashierName,
         paymentMethod,
-        changeAmount: result.changeAmount ?? changeAmount,
-        itemCount: cart.length,
+        totalKg,
+        totalAmount: finalTotal,
+        cashReceived: paymentMethod === "cash" ? effectiveCashReceived : 0,
+        changeAmount: finalChange,
         items: cart.map((item) => ({
           eggName: item.eggName,
           qtyKg: item.qtyKg,
           unitLabel: item.unitLabel,
+          isCracked: item.isCracked,
+          pricePerKg: item.pricePerKg,
           subtotal: item.subtotal,
         })),
       });
+      setIsReceiptOpen(true);
       setCart([]);
       setCashInput("");
       setIsCracked(false);
+      setCustomDiscountPctInput("");
       setManualCrackedPrice("");
     });
   }
@@ -385,7 +409,7 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
             <IconCheck className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <p className="text-sm font-extrabold">
-                Transaksi tersimpan ({receipt.itemCount} item,{" "}
+                Transaksi {receipt.receiptNo} tersimpan (
                 <span className="tabular-nums">
                   {formatRupiah(receipt.totalAmount)}
                 </span>
@@ -402,14 +426,23 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsReceiptOpen(true)}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-ink bg-ink px-3.5 text-xs font-bold text-ink-inverse transition-colors duration-150 hover:opacity-90 active:scale-[0.98] sm:flex-none"
+            >
+              <IconReceipt className="h-4 w-4 shrink-0" />
+              <span>Lihat Struk</span>
+            </button>
+
             <a
               href={buildSaleReceiptWhatsAppUrl(receipt)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-wa bg-wa px-3.5 text-xs font-bold text-ink-inverse transition-colors duration-150 hover:bg-wa-hover active:scale-[0.98] sm:flex-none"
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-wa bg-wa px-3.5 text-xs font-bold text-ink-inverse transition-colors duration-150 hover:bg-wa-hover active:scale-[0.98] sm:flex-none"
             >
               <IconWhatsApp className="h-4 w-4 shrink-0" />
-              <span>Kirim Nota WA</span>
+              <span>Kirim WA</span>
             </a>
 
             <button
@@ -575,10 +608,11 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
 
                 {isCracked && (
                   <div className="mt-2.5 space-y-2.5 rounded-lg border-2 border-warn-border bg-warn-bg p-3">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       {CRACKED_DISCOUNT_OPTIONS.map((pct) => {
                         const active =
                           manualCrackedPrice.trim() === "" &&
+                          customDiscountPctInput === "" &&
                           crackedDiscountPct === pct;
                         return (
                           <button
@@ -586,18 +620,51 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
                             type="button"
                             onClick={() => {
                               setCrackedDiscountPct(pct);
+                              setCustomDiscountPctInput("");
                               setManualCrackedPrice("");
                             }}
-                            className={`min-h-11 rounded-lg border-2 text-xs font-extrabold transition-colors duration-150 ${
+                            className={`min-h-11 rounded-lg border-2 px-1 text-xs font-extrabold transition-colors duration-150 ${
                               active
                                 ? "border-warn bg-warn text-ink-inverse"
                                 : "border-warn-border bg-surface text-warn"
                             }`}
                           >
-                            Diskon {pct}%
+                            {pct}%
                           </button>
                         );
                       })}
+
+                      <div className="relative flex items-center">
+                        <label
+                          htmlFor="custom-discount-pct"
+                          className="sr-only"
+                        >
+                          Persen diskon bebas (1 sampai 90 persen)
+                        </label>
+                        <input
+                          id="custom-discount-pct"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={2}
+                          value={customDiscountPctInput}
+                          onChange={(e) =>
+                            handleCustomDiscountPctChange(e.target.value)
+                          }
+                          placeholder="1-90"
+                          className={`tabular-nums min-h-11 w-full rounded-lg border-2 bg-surface pr-6 pl-2 text-center text-xs font-extrabold text-ink placeholder:font-semibold placeholder:text-ink-muted ${
+                            manualCrackedPrice.trim() === "" &&
+                            customDiscountPctInput !== ""
+                              ? "border-warn ring-1 ring-warn"
+                              : "border-warn-border"
+                          }`}
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute right-2 text-xs font-extrabold text-warn"
+                        >
+                          %
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -617,7 +684,9 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
                         onChange={(e) => setManualCrackedPrice(e.target.value)}
                         placeholder={`${roundToNearest500(
                           selectedEgg.price_per_kg *
-                            (1 - crackedDiscountPct / 100)
+                            (1 -
+                              Math.min(90, Math.max(1, crackedDiscountPct)) /
+                                100)
                         )}`}
                         className="tabular-nums min-h-11 w-full rounded-lg border-2 border-warn-border bg-surface px-3 text-sm font-bold text-ink"
                       />
@@ -949,6 +1018,11 @@ export function CashierPos({ initialEggs, isDemoLocal }: CashierPosProps) {
           </button>
         </section>
       </div>
+
+      <ReceiptModal
+        receipt={isReceiptOpen ? receipt : null}
+        onClose={() => setIsReceiptOpen(false)}
+      />
     </div>
   );
 }

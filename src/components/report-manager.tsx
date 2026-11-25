@@ -6,12 +6,20 @@ import type { SaleWithItems } from "@/lib/demo-data";
 import {
   formatDateTimeWib,
   formatKg,
+  formatReceiptNo,
   formatRupiah,
   getJakartaDateKey,
+  type ThermalReceiptData,
 } from "@/lib/format";
 import { saveDailyClosing } from "@/app/(app)/laporan/actions";
 import { exportSalesToExcel } from "@/lib/export-excel";
-import { IconCheck, IconClose, IconDownload } from "@/components/icons";
+import {
+  IconCheck,
+  IconClose,
+  IconDownload,
+  IconReceipt,
+} from "@/components/icons";
+import { ReceiptModal } from "@/components/receipt-modal";
 
 export interface TodayClosingContext {
   closingDate: string;
@@ -64,6 +72,9 @@ export function ReportManager({
   const [closingToast, setClosingToast] = useState<string | null>(null);
   const [isSavingClosing, startClosingTransition] = useTransition();
   const [isExporting, setIsExporting] = useState(false);
+  const [activeReceipt, setActiveReceipt] = useState<ThermalReceiptData | null>(
+    null
+  );
 
   const todayKey = todayClosingContext.closingDate;
   const [startDate, setStartDate] = useState<string>(() =>
@@ -158,6 +169,30 @@ export function ReportManager({
     } finally {
       setIsExporting(false);
     }
+  }
+
+  function handleOpenSaleReceipt(sale: SaleWithItems) {
+    const totalKg = Number(
+      sale.items.reduce((sum, i) => sum + i.qty_kg, 0).toFixed(2)
+    );
+    setActiveReceipt({
+      receiptNo: formatReceiptNo(sale.id, sale.created_at),
+      createdAtIso: sale.created_at,
+      cashierName: sale.cashier_name,
+      paymentMethod: sale.payment_method,
+      totalKg,
+      totalAmount: sale.total_amount,
+      cashReceived: sale.cash_received,
+      changeAmount: sale.change_amount,
+      items: sale.items.map((item) => ({
+        eggName: item.egg_name,
+        qtyKg: item.qty_kg,
+        unitLabel: item.unit_label,
+        isCracked: item.is_cracked,
+        pricePerKg: item.price_per_kg,
+        subtotal: item.subtotal,
+      })),
+    });
   }
 
   return (
@@ -521,16 +556,28 @@ export function ReportManager({
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-left sm:text-right">
-                    <p className="tabular-nums text-base font-extrabold text-ink">
-                      {formatRupiah(sale.total_amount)}
-                    </p>
-                    {isOwner ? (
-                      <p className="tabular-nums text-xs font-semibold text-safe">
-                        Laba kotor{" "}
-                        {formatRupiah(sale.total_amount - sale.total_cost)}
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    <div className="text-left sm:text-right">
+                      <p className="tabular-nums text-base font-extrabold text-ink">
+                        {formatRupiah(sale.total_amount)}
                       </p>
-                    ) : null}
+                      {isOwner ? (
+                        <p className="tabular-nums text-xs font-semibold text-safe">
+                          Laba kotor{" "}
+                          {formatRupiah(sale.total_amount - sale.total_cost)}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSaleReceipt(sale)}
+                      aria-label={`Lihat struk transaksi ${formatReceiptNo(sale.id, sale.created_at)}`}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border-2 border-border-strong bg-tray px-3 text-xs font-bold text-ink transition-colors duration-150 hover:border-ink hover:bg-surface active:scale-[0.98]"
+                    >
+                      <IconReceipt className="h-4 w-4 shrink-0" />
+                      <span>Struk</span>
+                    </button>
                   </div>
                 </li>
               );
@@ -538,6 +585,11 @@ export function ReportManager({
           </ul>
         )}
       </section>
+
+      <ReceiptModal
+        receipt={activeReceipt}
+        onClose={() => setActiveReceipt(null)}
+      />
     </div>
   );
 }

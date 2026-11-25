@@ -41,6 +41,7 @@ export default async function LaporanPage() {
 
     const [
       eggsRes,
+      profilesRes,
       salesHistoryRes,
       todaySalesRes,
       expensesRes,
@@ -48,10 +49,11 @@ export default async function LaporanPage() {
       closingRes,
     ] = await Promise.all([
       supabase.from("egg_types").select("id, name"),
+      supabase.from("profiles").select("id, full_name"),
       supabase
         .from("sales")
         .select(
-          "id, total_amount, total_cost, payment_method, cash_received, change_amount, created_at, sale_items(id, egg_type_id, qty_kg, unit_label, is_cracked, price_per_kg, cost_per_kg, subtotal)"
+          "id, cashier_id, total_amount, total_cost, payment_method, cash_received, change_amount, created_at, sale_items(id, egg_type_id, qty_kg, unit_label, is_cracked, price_per_kg, cost_per_kg, subtotal)"
         )
         .gte("created_at", thirtyDaysStartIso)
         .order("created_at", { ascending: false })
@@ -81,10 +83,18 @@ export default async function LaporanPage() {
       eggNameMap.set(e.id, e.name);
     }
 
+    const cashierNameMap = new Map<string, string>();
+    for (const p of (profilesRes.data as
+      | { id: string; full_name: string }[]
+      | null) ?? []) {
+      cashierNameMap.set(p.id, p.full_name);
+    }
+
     const rawSales =
       (salesHistoryRes.data as
         | {
             id: string;
+            cashier_id: string;
             total_amount: number;
             total_cost: number;
             payment_method: PaymentMethod;
@@ -108,6 +118,7 @@ export default async function LaporanPage() {
 
     salesHistory = rawSales.map((sale) => ({
       id: sale.id,
+      cashier_name: cashierNameMap.get(sale.cashier_id) ?? "Kasir",
       total_amount: Number(sale.total_amount),
       total_cost: Number(sale.total_cost),
       payment_method: sale.payment_method,

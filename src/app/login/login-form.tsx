@@ -46,7 +46,7 @@ export function LoginForm({ supabaseConfigured }: LoginFormProps) {
         >
           <span className="h-2 w-2 shrink-0 rounded-full bg-warn" />
           <span className="truncate">
-            Mode Demo Lokal aktif (tanpa database Supabase)
+            Mode Demo: data tersimpan sementara di browser
           </span>
         </div>
       )}
@@ -82,7 +82,7 @@ export function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 : "Demo Kasir / Staff"}
             </span>
             <span className="text-xs font-medium text-accent-soft">
-              Lala (Kasir, Stok, Kas Keluar)
+              Kasir 1 (Kasir, Stok, Kas Keluar)
             </span>
           </button>
 
@@ -96,7 +96,7 @@ export function LoginForm({ supabaseConfigured }: LoginFormProps) {
               {pendingRole === "owner" ? "Membuka Kasir…" : "Demo Owner"}
             </span>
             <span className="text-xs font-medium text-tray">
-              Pak Budi Santoso (Akses Penuh)
+              Lala (Akses Penuh)
             </span>
           </button>
         </div>
